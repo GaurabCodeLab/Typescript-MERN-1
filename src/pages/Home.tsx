@@ -84,7 +84,7 @@ const Home = () => {
             {data &&
               data.length > 0 &&
               data.map((value) => (
-                <tr>
+                <tr key={value._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {value.firstName}
                   </td>

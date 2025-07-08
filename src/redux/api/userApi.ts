@@ -1,74 +1,49 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { User, UserResponse } from "../../types/user";
-
-const baseQuery = fetchBaseQuery({
-  baseUrl: "http://localhost:8080",
-  prepareHeaders: (headers) => {
-    headers.set("Content-Type", "application/json");
-    return headers;
-  },
-});
-
-const baseQueryWithErrorHandling = async (
-  args: any,
-  api: any,
-  extraOptions: any
-) => {
-  const result = await baseQuery(args, api, extraOptions);
-
-  if (result.error) {
-    // Handle different types of errors
-    if (result.error.status === "FETCH_ERROR") {
-      return {
-        error: {
-          status: "FETCH_ERROR",
-          data: {
-            message:
-              "Network error. Please check if the server is running on http://localhost:8080",
-          },
-        },
-      };
-    }
-
-    if (result.error.status === "PARSING_ERROR") {
-      return {
-        error: {
-          status: "PARSING_ERROR",
-          data: { message: "Invalid response format from server" },
-        },
-      };
-    }
-  }
-
-  return result;
-};
+import type { User, UserResponse, SingleUserResponse } from "../../types/user";
 
 export const userApi = createApi({
   reducerPath: "userApi",
-  baseQuery: baseQueryWithErrorHandling,
-  tagTypes: ["user"],
+  baseQuery: fetchBaseQuery({
+    baseUrl: "http://localhost:8080",
+    prepareHeaders: (headers) => {
+      headers.set("Content-Type", "application/json");
+      return headers;
+    },
+  }),
+  tagTypes: ["users"],
   endpoints: (builder) => ({
     fetchUsers: builder.query<User[], void>({
-      query: () => ({ url: "/", method: "GET" }),
-      transformResponse: (response: User[] | UserResponse) =>
-        Array.isArray(response) ? response : response.data || [],
-      providesTags: ["user"],
+      query: () => ({
+        url: "/",
+        method: "GET",
+      }),
+      transformResponse: (response: UserResponse) => response.data,
+      providesTags: ["users"],
     }),
     fetchSingleUser: builder.query<User, string>({
       query: (id) => ({
         url: `/${id}`,
         method: "GET",
       }),
-      transformResponse: (response: any) => response.user,
-      providesTags: ["user"],
+      transformResponse: (response: SingleUserResponse) => response.data,
+      providesTags: ["users"],
     }),
     createUser: builder.mutation<User, User>({
-      query: (newUser) => ({
+      query: (userData) => ({
         url: "/",
         method: "POST",
-        body: newUser,
+        body: userData,
       }),
-      invalidatesTags: ["user"],
+      transformResponse: (response: SingleUserResponse) => response.data,
+      invalidatesTags: ["users"],
+    }),
+    deleteUser: builder.mutation<User, string>({
+      query: (id) => ({
+        url: `/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: SingleUserResponse) => response.data,
+      invalidatesTags: ["users"],
     }),
     updateUser: builder.mutation<User, { id: string; data: Partial<User> }>({
       query: ({ id, data }) => ({
@@ -76,24 +51,16 @@ export const userApi = createApi({
         method: "PATCH",
         body: data,
       }),
-      invalidatesTags: ["user"],
-    }),
-    deleteUser: builder.mutation<{ success: boolean }, string>({
-      query: (id) => ({
-        url: `/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["user"],
+      transformResponse: (response: SingleUserResponse) => response.data,
+      invalidatesTags: ["users"],
     }),
   }),
 });
-
-console.log("userApi", userApi);
 
 export const {
   useFetchUsersQuery,
   useFetchSingleUserQuery,
   useCreateUserMutation,
-  useUpdateUserMutation,
   useDeleteUserMutation,
+  useUpdateUserMutation,
 } = userApi;

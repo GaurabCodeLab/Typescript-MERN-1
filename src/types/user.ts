@@ -13,3 +13,8 @@ export interface UserResponse {
   message: string;
   data: User[];
 }
+
+export interface SingleUserResponse {
+  message: string;
+  data: User;
+}
