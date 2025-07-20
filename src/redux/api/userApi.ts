@@ -3,6 +3,7 @@ import type { User, UserResponse, SingleUserResponse } from "../../types/user";
 
 export const userApi = createApi({
   reducerPath: "userApi",
+  tagTypes: ["user"],
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:8080",
     prepareHeaders: (headers) => {
@@ -10,40 +11,31 @@ export const userApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["users"],
   endpoints: (builder) => ({
     fetchUsers: builder.query<User[], void>({
       query: () => ({
         url: "/",
         method: "GET",
       }),
+      providesTags: ["user"],
       transformResponse: (response: UserResponse) => response.data,
-      providesTags: ["users"],
     }),
     fetchSingleUser: builder.query<User, string>({
       query: (id) => ({
         url: `/${id}`,
         method: "GET",
       }),
+      providesTags: ["user"],
       transformResponse: (response: SingleUserResponse) => response.data,
-      providesTags: ["users"],
     }),
     createUser: builder.mutation<User, User>({
-      query: (userData) => ({
+      query: (newUser) => ({
         url: "/",
         method: "POST",
-        body: userData,
+        body: newUser,
       }),
+      invalidatesTags: ["user"],
       transformResponse: (response: SingleUserResponse) => response.data,
-      invalidatesTags: ["users"],
-    }),
-    deleteUser: builder.mutation<User, string>({
-      query: (id) => ({
-        url: `/${id}`,
-        method: "DELETE",
-      }),
-      transformResponse: (response: SingleUserResponse) => response.data,
-      invalidatesTags: ["users"],
     }),
     updateUser: builder.mutation<User, { id: string; data: Partial<User> }>({
       query: ({ id, data }) => ({
@@ -51,8 +43,16 @@ export const userApi = createApi({
         method: "PATCH",
         body: data,
       }),
+      invalidatesTags: ["user"],
       transformResponse: (response: SingleUserResponse) => response.data,
-      invalidatesTags: ["users"],
+    }),
+    deleteUser: builder.mutation<User, string>({
+      query: (id) => ({
+        url: `/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["user"],
+      transformResponse: (response: SingleUserResponse) => response.data,
     }),
   }),
 });
@@ -61,6 +61,6 @@ export const {
   useFetchUsersQuery,
   useFetchSingleUserQuery,
   useCreateUserMutation,
-  useDeleteUserMutation,
   useUpdateUserMutation,
+  useDeleteUserMutation,
 } = userApi;

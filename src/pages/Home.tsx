@@ -1,45 +1,40 @@
+import { Link } from "react-router-dom";
 import {
   useFetchUsersQuery,
   useDeleteUserMutation,
 } from "../redux/api/userApi";
 import Swal from "sweetalert2";
-import { Link } from "react-router-dom";
+import type React from "react";
 
-const Home = () => {
-  const { isLoading, data } = useFetchUsersQuery();
+const Home: React.FC = () => {
+  const { data, isFetching } = useFetchUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
 
   const handleDelete = (id: string) => {
     Swal.fire({
       title: "Do you want to delete the user?",
       icon: "warning",
+      confirmButtonText: "Yes",
       showCancelButton: true,
-      confirmButtonText: "Delete",
+      cancelButtonText: "No",
       confirmButtonColor: "red",
     }).then((result) => {
       if (result.isConfirmed) {
-        deleteUser(id)
-          .unwrap()
-          .then(() => {
-            Swal.fire({
-              icon: "success",
-              text: "user deleted successfully",
-            });
-          })
-          .catch((error) => {
-            Swal.fire({
-              icon: "error",
-              text: error.message || "Error in deleting user",
-            });
+        deleteUser(id).then(() => {
+          Swal.fire({
+            icon: "success",
+            text: "user deleted successfully",
           });
+        });
       }
     });
   };
 
-  if (isLoading) {
-    return <div>Loading user data...</div>;
+  if (isFetching) {
+    return (
+      <p className="text-lg font-bold mt-3 text-center">loading user data...</p>
+    );
   }
-
   return (
     <div className="w-[95%] mx-auto">
       <div className="my-3 flex justify-end pe-5">
@@ -110,7 +105,7 @@ const Home = () => {
                     </Link>
                     <button
                       className="border bg-red-600 text-white px-2 py-1 rounded-md cursor-pointer"
-                      onClick={() => handleDelete(value._id)}
+                      onClick={() => handleDelete(value._id?.toString()!)}
                     >
                       Delete
                     </button>

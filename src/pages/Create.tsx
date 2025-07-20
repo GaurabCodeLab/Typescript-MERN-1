@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import { useCreateUserMutation } from "../redux/api/userApi";
 import Swal from "sweetalert2";
-import { useNavigate, Link } from "react-router-dom";
+import type React from "react";
+import type { User } from "../types/user";
 
-const Create = () => {
+const Create: React.FC = () => {
   const [createUser, { isLoading }] = useCreateUserMutation();
   const {
     register,
@@ -11,29 +13,29 @@ const Create = () => {
     formState: { errors },
     setValue,
     reset,
-  } = useForm();
+  } = useForm<User>();
   const navigate = useNavigate();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: User) => {
     try {
-      await createUser(data).unwrap();
+      const createdUser = await createUser(data);
       Swal.fire({
         icon: "success",
-        text: "user created successfully",
+        text: `user name ${createdUser.data?.firstName} created successfully`,
       }).then((result) => {
         if (result.isConfirmed) {
+          reset();
           navigate("/");
         }
       });
-      reset();
-    } catch (error: any) {
-      Swal.fire({
-        icon: "error",
-        text: error.message ? error.message : "Error in creating user",
-      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "something went wrong";
+      console.log("Error in creating new user: " + errorMessage);
     }
   };
-  const inputStyle = (field: string) =>
+
+  const inputStyle = (field: keyof User) =>
     `border rounded-md h-7 ps-2 mt-1 bg-white ${
       errors[field] ? "border-red-500" : "border-gray-300"
     }`;
@@ -257,10 +259,10 @@ const Create = () => {
             <div className="flex mt-4 gap-3">
               <button
                 className="border mt-2 px-4 py-2 rounded-lg cursor-pointer bg-green-600 text-white"
-                disabled={isLoading}
                 type="submit"
+                disabled={isLoading}
               >
-                {isLoading ? "Creating..." : " Create User"}
+                {isLoading ? "Creating..." : "Create User"}
               </button>
               <Link to="/">
                 <button className="border mt-2 px-4 py-2 rounded-lg cursor-pointer bg-black text-white">

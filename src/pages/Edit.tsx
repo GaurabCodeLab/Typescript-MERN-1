@@ -1,62 +1,60 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   useFetchSingleUserQuery,
   useUpdateUserMutation,
 } from "../redux/api/userApi";
 import Swal from "sweetalert2";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import type { User } from "../types/user";
 
-const Edit = () => {
+const Edit: React.FC = () => {
+  const [updateUser, { isLoading }] = useUpdateUserMutation();
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
-  } = useForm();
-  const navigate = useNavigate();
+  } = useForm<User>();
   const { id } = useParams<{ id: string }>();
-  const { isLoading, data: user } = useFetchSingleUserQuery(id!, { skip: !id });
-  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
-
+  const navigate = useNavigate();
+  const { data } = useFetchSingleUserQuery(id!);
   useEffect(() => {
-    setValue("firstName", user && user.firstName);
-    setValue("lastName", user && user.lastName);
-    setValue("email", user && user.email);
-    setValue("mobile", user && user.mobile);
-    setValue("gender", user && user.gender);
-    setValue("hobbies", user && user.hobbies);
-    setValue("book", user && user.book);
-  }, [user]);
+    if (data) {
+      setValue("firstName", data?.firstName);
+      setValue("lastName", data?.lastName);
+      setValue("email", data?.email);
+      setValue("mobile", data?.mobile);
+      setValue("gender", data?.gender);
+      setValue("hobbies", data?.hobbies);
+      setValue("book", data?.book);
+    }
+  }, [data]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: User) => {
     try {
-      await updateUser({ id: id!, data }).unwrap();
-      Swal.fire({
-        icon: "success",
-        text: "user updated successfully",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate("/");
-        }
-      });
-      reset();
-    } catch (error: any) {
-      Swal.fire({
-        icon: "error",
-        text: error.message ? error.message : "Error in updating user",
-      });
+      if (id) {
+        const updateUserDetails = await updateUser({ id, data });
+        Swal.fire({
+          icon: "success",
+          text: `user name ${updateUserDetails.data?.firstName} updated successfully`,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate("/");
+          }
+        });
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "something went wrong";
+      console.log("Error in updating user: " + errorMessage);
     }
   };
-  const inputStyle = (field: string) =>
+
+  const inputStyle = (field: keyof User) =>
     `border rounded-md h-7 ps-2 mt-3 ${
       errors[field] ? "border-red-500" : "border-gray-300"
     }`;
-
-  if (isLoading) {
-    return <p>Loading user data...</p>;
-  }
 
   return (
     <div className="w-[70%] mx-auto mt-3 bg-gray-100 px-10 py-6 rounded-2xl">
@@ -277,10 +275,10 @@ const Edit = () => {
             <div className="flex mt-4 gap-3">
               <button
                 className="border mt-2 px-4 py-2 rounded-lg cursor-pointer bg-green-600 text-white"
-                disabled={isUpdating}
                 type="submit"
+                disabled={isLoading}
               >
-                {isUpdating ? "Updating..." : " Update User"}
+                {isLoading ? "Updating..." : "Update User"}
               </button>
               <Link to="/">
                 <button className="border mt-2 px-4 py-2 rounded-lg cursor-pointer bg-black text-white">
