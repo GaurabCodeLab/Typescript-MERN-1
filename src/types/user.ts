@@ -7,6 +7,7 @@ export interface User {
   gender: string;
   hobbies: [string];
   book: string;
+  createdAt: string;
 }
 
 export interface UserResponse {

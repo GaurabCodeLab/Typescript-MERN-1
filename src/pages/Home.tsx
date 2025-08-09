@@ -5,11 +5,71 @@ import {
 } from "../redux/api/userApi";
 import Swal from "sweetalert2";
 import type React from "react";
+import { useState, useEffect } from "react";
+import type { User } from "../types/user";
+import { FaSort, FaSortUp } from "react-icons/fa";
+import { FaSortDown } from "react-icons/fa6";
+
+const ITEMS_PER_PAGE = 4;
 
 const Home: React.FC = () => {
   const { data, isFetching } = useFetchUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
+  const [filteredUserData, setFilteredUserData] = useState<User[]>();
+  const [gender, setGender] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [paginationArray, setPaginationArray] = useState<number[]>([]);
+  const [noOfPages, setNoOfPages] = useState<number>(1);
 
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      setFilteredUserData([]);
+      return;
+    }
+    let tempUserData = [...data];
+    if (gender === "male" || gender === "female") {
+      tempUserData = tempUserData.filter((value) => value.gender === gender);
+    }
+    if (sortOrder === "ascending") {
+      tempUserData = tempUserData.sort(
+        (a, b) => Number(a.mobile) - Number(b.mobile)
+      );
+    }
+    if (sortOrder === "descending") {
+      tempUserData = tempUserData.sort(
+        (a, b) => Number(b.mobile) - Number(a.mobile)
+      );
+    }
+    if (search.trim() !== "") {
+      const lowerCaseSearch = search.toLowerCase();
+      tempUserData = tempUserData.filter(
+        (value) =>
+          value.firstName.toLowerCase().includes(lowerCaseSearch) ||
+          value.lastName.toLowerCase().includes(lowerCaseSearch) ||
+          value.email.toLowerCase().includes(lowerCaseSearch) ||
+          value.mobile.toLowerCase().includes(lowerCaseSearch) ||
+          value.gender.toLowerCase().includes(lowerCaseSearch) ||
+          value.book.toLowerCase().includes(lowerCaseSearch) ||
+          value.hobbies.join(",").toLowerCase().includes(lowerCaseSearch)
+      );
+    }
+    setFilteredUserData(tempUserData);
+  }, [data, search, gender, sortOrder]);
+
+  useEffect(() => {
+    if (filteredUserData && filteredUserData?.length > 0) {
+      const totalItems = filteredUserData?.length;
+      const tempNoOfPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+      setNoOfPages(tempNoOfPages);
+      const tempPaginationArray = new Array(tempNoOfPages);
+      setPaginationArray(tempPaginationArray);
+    }
+  }, [filteredUserData]);
+
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
   const handleDelete = (id: string) => {
     Swal.fire({
       title: "Do you want to delete the user?",
@@ -37,13 +97,36 @@ const Home: React.FC = () => {
   }
   return (
     <div className="w-[95%] mx-auto">
-      <div className="my-3 flex justify-end pe-5">
+      <div className="my-3 flex justify-between pe-5">
+        <div className="flex gap-5">
+          <input
+            type="text"
+            name=""
+            id=""
+            value={search}
+            className="border rounded-sm px-2"
+            placeholder="search..."
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            name=""
+            id=""
+            value={gender}
+            className="border rounded-sm w-36 ps-1"
+            onChange={(e) => setGender(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
         <Link to="/create">
           <button className=" bg-green-600 px-2 py-1 rounded-md cursor-pointer text-white font-bold">
             Add User
           </button>
         </Link>
       </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-100">
@@ -57,8 +140,27 @@ const Home: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Mobile
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase flex">
+                Mobile{" "}
+                {sortOrder === "" ? (
+                  <FaSort
+                    size="20px"
+                    className="cursor-pointer"
+                    onClick={() => setSortOrder("ascending")}
+                  />
+                ) : sortOrder === "ascending" ? (
+                  <FaSortUp
+                    size="20px"
+                    className="cursor-pointer"
+                    onClick={() => setSortOrder("descending")}
+                  />
+                ) : (
+                  <FaSortDown
+                    size="20px"
+                    className="cursor-pointer"
+                    onClick={() => setSortOrder("")}
+                  />
+                )}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Gender
@@ -76,9 +178,9 @@ const Home: React.FC = () => {
           </thead>
 
           <tbody className="bg-white divide-y divide-gray-200">
-            {data &&
-              data.length > 0 &&
-              data.map((value) => (
+            {filteredUserData &&
+              filteredUserData.length > 0 &&
+              filteredUserData.slice(startIndex, endIndex).map((value) => (
                 <tr key={value._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {value.firstName}
@@ -114,6 +216,43 @@ const Home: React.FC = () => {
               ))}
           </tbody>
         </table>
+        <div className="flex gap-1 justify-end mt-4">
+          <button
+            className={
+              currentPage == 0
+                ? "border px-2 rounded-md cursor-not-allowed bg-gray-200"
+                : "border px-2 rounded-md cursor-pointer bg-gray-200"
+            }
+            onClick={() => setCurrentPage((pre) => pre - 1)}
+            disabled={currentPage === 0}
+          >
+            Previous
+          </button>
+          {paginationArray.length > 0 &&
+            [...paginationArray.keys()].map((value, index) => (
+              <span
+                key={index}
+                className={
+                  index === currentPage
+                    ? "border px-3 rounded-sm cursor-pointer bg-amber-600 text-white"
+                    : "border px-3 rounded-sm cursor-pointer"
+                }
+              >
+                {value + 1}
+              </span>
+            ))}
+          <button
+            className={
+              currentPage == noOfPages - 1
+                ? "border px-2 rounded-md cursor-not-allowed bg-gray-200"
+                : "border px-2 rounded-md cursor-pointer bg-gray-200"
+            }
+            onClick={() => setCurrentPage((pre) => pre + 1)}
+            disabled={currentPage === noOfPages - 1}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
