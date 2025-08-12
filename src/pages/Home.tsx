@@ -237,6 +237,7 @@ const Home: React.FC = () => {
                     ? "border px-3 rounded-sm cursor-pointer bg-amber-600 text-white"
                     : "border px-3 rounded-sm cursor-pointer"
                 }
+                onClick={() => setCurrentPage(index)}
               >
                 {value + 1}
               </span>
