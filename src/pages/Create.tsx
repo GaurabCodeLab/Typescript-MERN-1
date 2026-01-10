@@ -1,12 +1,13 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { useCreateUserMutation } from "../redux/api/userApi";
 import Swal from "sweetalert2";
 import type React from "react";
-import type { User } from "../types/user";
+import type { User, UserState } from "../types/user";
+import type { AppDispatch, RootState } from "../redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { createUser } from "../redux/slices/userSlice";
 
 const Create: React.FC = () => {
-  const [createUser, { isLoading }] = useCreateUserMutation();
   const {
     register,
     handleSubmit,
@@ -14,14 +15,18 @@ const Create: React.FC = () => {
     setValue,
     reset,
   } = useForm<User>();
+  const { loading: isLoading } = useSelector<RootState, UserState>(
+    (state) => state.user
+  );
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   const onSubmit = async (data: User) => {
     try {
-      const createdUser = await createUser(data);
+      await dispatch(createUser(data)).unwrap();
       Swal.fire({
         icon: "success",
-        text: `user name ${createdUser.data?.firstName} created successfully`,
+        text: `user name ${data?.firstName} created successfully`,
       }).then((result) => {
         if (result.isConfirmed) {
           reset();

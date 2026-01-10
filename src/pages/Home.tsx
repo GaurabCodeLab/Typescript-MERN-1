@@ -1,20 +1,21 @@
 import { Link } from "react-router-dom";
-import {
-  useFetchUsersQuery,
-  useDeleteUserMutation,
-} from "../redux/api/userApi";
 import Swal from "sweetalert2";
 import type React from "react";
 import { useState, useEffect } from "react";
-import type { User } from "../types/user";
+import type { User, UserState } from "../types/user";
 import { FaSort, FaSortUp } from "react-icons/fa";
 import { FaSortDown } from "react-icons/fa6";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../redux/store";
+import { fetchUsers, deleteUser } from "../redux/slices/userSlice";
 
 const ITEMS_PER_PAGE = 4;
 
 const Home: React.FC = () => {
-  const { data, isFetching } = useFetchUsersQuery();
-  const [deleteUser] = useDeleteUserMutation();
+  const { users: data, loading: isFetching } = useSelector<
+    RootState,
+    UserState
+  >((state) => state.user);
   const [filteredUserData, setFilteredUserData] = useState<User[]>();
   const [gender, setGender] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<string>("");
@@ -22,6 +23,11 @@ const Home: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [paginationArray, setPaginationArray] = useState<number[]>([]);
   const [noOfPages, setNoOfPages] = useState<number>(1);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!data || data.length === 0) {
@@ -80,12 +86,15 @@ const Home: React.FC = () => {
       confirmButtonColor: "red",
     }).then((result) => {
       if (result.isConfirmed) {
-        deleteUser(id).then(() => {
-          Swal.fire({
-            icon: "success",
-            text: "user deleted successfully",
+        dispatch(deleteUser(id))
+          .unwrap()
+          .then(() => {
+            Swal.fire({
+              icon: "success",
+              text: "user deleted successfully",
+            });
+            dispatch(fetchUsers());
           });
-        });
       }
     });
   };

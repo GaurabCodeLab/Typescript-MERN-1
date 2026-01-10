@@ -19,3 +19,10 @@ export interface SingleUserResponse {
   message: string;
   data: User;
 }
+
+export interface UserState {
+  loading: boolean;
+  users: User[] | null;
+  singleUser: User | null;
+  error: string | null;
+}

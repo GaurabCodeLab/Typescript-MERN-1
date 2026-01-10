@@ -1,15 +1,13 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import {
-  useFetchSingleUserQuery,
-  useUpdateUserMutation,
-} from "../redux/api/userApi";
 import Swal from "sweetalert2";
-import type { User } from "../types/user";
+import type { User, UserState } from "../types/user";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../redux/store";
+import { fetchSingleUser, updateUser } from "../redux/slices/userSlice";
 
 const Edit: React.FC = () => {
-  const [updateUser, { isLoading }] = useUpdateUserMutation();
   const {
     register,
     handleSubmit,
@@ -18,7 +16,16 @@ const Edit: React.FC = () => {
   } = useForm<User>();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useFetchSingleUserQuery(id!);
+  const dispatch = useDispatch<AppDispatch>();
+  const { singleUser: data, loading: isLoading } = useSelector<
+    RootState,
+    UserState
+  >((state) => state.user);
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchSingleUser(id));
+    }
+  }, [id, dispatch]);
   useEffect(() => {
     if (data) {
       setValue("firstName", data?.firstName);
@@ -34,10 +41,10 @@ const Edit: React.FC = () => {
   const onSubmit = async (data: User) => {
     try {
       if (id) {
-        const updateUserDetails = await updateUser({ id, data });
+        await dispatch(updateUser({ id, data })).unwrap();
         Swal.fire({
           icon: "success",
-          text: `user name ${updateUserDetails.data?.firstName} updated successfully`,
+          text: `user name ${data?.firstName} updated successfully`,
         }).then((result) => {
           if (result.isConfirmed) {
             navigate("/");
