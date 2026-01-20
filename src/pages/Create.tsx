@@ -2,10 +2,8 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import type React from "react";
-import type { User, UserState } from "../types/user";
-import type { AppDispatch, RootState } from "../redux/store";
-import { useDispatch, useSelector } from "react-redux";
-import { createUser } from "../redux/slices/userSlice";
+import type { User } from "../types/user";
+import { useCreateUserMutation } from "../redux/api/userApi";
 
 const Create: React.FC = () => {
   const {
@@ -15,24 +13,23 @@ const Create: React.FC = () => {
     setValue,
     reset,
   } = useForm<User>();
-  const { loading: isLoading } = useSelector<RootState, UserState>(
-    (state) => state.user
-  );
+  const [createUser, { isLoading }] = useCreateUserMutation();
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
 
   const onSubmit = async (data: User) => {
     try {
-      await dispatch(createUser(data)).unwrap();
-      Swal.fire({
-        icon: "success",
-        text: `user name ${data?.firstName} created successfully`,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          reset();
-          navigate("/");
-        }
-      });
+      const { data: userDetails } = await createUser(data);
+      if (userDetails) {
+        Swal.fire({
+          icon: "success",
+          text: `user name ${data?.firstName} created successfully`,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            reset();
+            navigate("/dashboard");
+          }
+        });
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "something went wrong";
@@ -269,7 +266,7 @@ const Create: React.FC = () => {
               >
                 {isLoading ? "Creating..." : "Create User"}
               </button>
-              <Link to="/">
+              <Link to="/dashboard">
                 <button className="border mt-2 px-4 py-2 rounded-lg cursor-pointer bg-black text-white">
                   Back
                 </button>

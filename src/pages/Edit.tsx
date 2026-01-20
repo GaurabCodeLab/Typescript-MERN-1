@@ -2,10 +2,11 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import type { User, UserState } from "../types/user";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../redux/store";
-import { fetchSingleUser, updateUser } from "../redux/slices/userSlice";
+import type { User } from "../types/user";
+import {
+  useFetchSingleUserQuery,
+  useUpdateUserMutation,
+} from "../redux/api/userApi";
 
 const Edit: React.FC = () => {
   const {
@@ -15,17 +16,10 @@ const Edit: React.FC = () => {
     setValue,
   } = useForm<User>();
   const { id } = useParams<{ id: string }>();
+  const { data } = useFetchSingleUserQuery(id!);
+  const [updateUser, { isLoading }] = useUpdateUserMutation();
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
-  const { singleUser: data, loading: isLoading } = useSelector<
-    RootState,
-    UserState
-  >((state) => state.user);
-  useEffect(() => {
-    if (id) {
-      dispatch(fetchSingleUser(id));
-    }
-  }, [id, dispatch]);
+
   useEffect(() => {
     if (data) {
       setValue("firstName", data?.firstName);
@@ -41,15 +35,17 @@ const Edit: React.FC = () => {
   const onSubmit = async (data: User) => {
     try {
       if (id) {
-        await dispatch(updateUser({ id, data })).unwrap();
-        Swal.fire({
-          icon: "success",
-          text: `user name ${data?.firstName} updated successfully`,
-        }).then((result) => {
-          if (result.isConfirmed) {
-            navigate("/");
-          }
-        });
+        const { data: userDetails } = await updateUser({ id, data });
+        if (userDetails) {
+          Swal.fire({
+            icon: "success",
+            text: `user name ${data?.firstName} updated successfully`,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/dashboard");
+            }
+          });
+        }
       }
     } catch (error: unknown) {
       const errorMessage =

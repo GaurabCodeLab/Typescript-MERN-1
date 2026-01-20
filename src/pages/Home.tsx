@@ -2,20 +2,17 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import type React from "react";
 import { useState, useEffect } from "react";
-import type { User, UserState } from "../types/user";
+import type { User } from "../types/user";
 import { FaSort, FaSortUp } from "react-icons/fa";
 import { FaSortDown } from "react-icons/fa6";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../redux/store";
-import { fetchUsers, deleteUser } from "../redux/slices/userSlice";
+import {
+  useFetchUsersQuery,
+  useDeleteUserMutation,
+} from "../redux/api/userApi";
 
 const ITEMS_PER_PAGE = 4;
 
 const Home: React.FC = () => {
-  const { users: data, loading: isFetching } = useSelector<
-    RootState,
-    UserState
-  >((state) => state.user);
   const [filteredUserData, setFilteredUserData] = useState<User[]>();
   const [gender, setGender] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<string>("");
@@ -23,11 +20,8 @@ const Home: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [paginationArray, setPaginationArray] = useState<number[]>([]);
   const [noOfPages, setNoOfPages] = useState<number>(1);
-  const dispatch = useDispatch<AppDispatch>();
-
-  useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch]);
+  const { data, isFetching } = useFetchUsersQuery();
+  const [deleteUser, { isLoading }] = useDeleteUserMutation();
 
   useEffect(() => {
     if (!data || data.length === 0) {
@@ -40,12 +34,12 @@ const Home: React.FC = () => {
     }
     if (sortOrder === "ascending") {
       tempUserData = tempUserData.sort(
-        (a, b) => Number(a.mobile) - Number(b.mobile)
+        (a, b) => Number(a.mobile) - Number(b.mobile),
       );
     }
     if (sortOrder === "descending") {
       tempUserData = tempUserData.sort(
-        (a, b) => Number(b.mobile) - Number(a.mobile)
+        (a, b) => Number(b.mobile) - Number(a.mobile),
       );
     }
     if (search.trim() !== "") {
@@ -58,7 +52,7 @@ const Home: React.FC = () => {
           value.mobile.toLowerCase().includes(lowerCaseSearch) ||
           value.gender.toLowerCase().includes(lowerCaseSearch) ||
           value.book.toLowerCase().includes(lowerCaseSearch) ||
-          value.hobbies.join(",").toLowerCase().includes(lowerCaseSearch)
+          value.hobbies.join(",").toLowerCase().includes(lowerCaseSearch),
       );
     }
     setFilteredUserData(tempUserData);
@@ -86,14 +80,22 @@ const Home: React.FC = () => {
       confirmButtonColor: "red",
     }).then((result) => {
       if (result.isConfirmed) {
-        dispatch(deleteUser(id))
-          .unwrap()
-          .then(() => {
+        deleteUser(id)
+          .then((res) => {
+            if (res.data) {
+              Swal.fire({
+                icon: "success",
+                text: "user deleted successfully",
+              });
+            }
+          })
+          .catch((error) => {
+            const errorMessage =
+              error instanceof Error ? error.message : "something went wrong";
             Swal.fire({
-              icon: "success",
-              text: "user deleted successfully",
+              icon: "error",
+              text: errorMessage,
             });
-            dispatch(fetchUsers());
           });
       }
     });
@@ -129,7 +131,7 @@ const Home: React.FC = () => {
             <option value="female">Female</option>
           </select>
         </div>
-        <Link to="/create">
+        <Link to="/dashboard/create">
           <button className=" bg-green-600 px-2 py-1 rounded-md cursor-pointer text-white font-bold">
             Add User
           </button>
@@ -209,7 +211,7 @@ const Home: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{value.book}</td>
                   <td className="px-6 py-4 whitespace-nowrap flex gap-3">
-                    <Link to={`/edit/${value._id}`}>
+                    <Link to={`/dashboard/${value._id}`}>
                       <button className="border bg-green-600 text-white px-2 py-1 rounded-md cursor-pointer">
                         Edit
                       </button>
