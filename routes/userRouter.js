@@ -1,9 +1,10 @@
 const express = require("express");
 const User = require("../model/user");
+const personAuth = require("../middleware/personAuth");
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", personAuth, async (req, res) => {
   try {
     const usersList = await User.find({});
     return res
@@ -16,7 +17,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", personAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findOne({ _id: id });
@@ -28,7 +29,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", personAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedUser = await User.findOneAndDelete({ _id: id });
@@ -45,7 +46,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/create", personAuth, async (req, res) => {
   try {
     const newUser = req.body;
     const validFields = [
@@ -58,7 +59,7 @@ router.post("/", async (req, res) => {
       "book",
     ];
     const isValidBody = Object.keys(newUser).every((value) =>
-      validFields.includes(value)
+      validFields.includes(value),
     );
     if (!isValidBody) {
       return res.status(400).json({ message: "Invalid body fields" });
@@ -74,7 +75,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", personAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const updatedUser = req.body;
@@ -88,7 +89,7 @@ router.patch("/:id", async (req, res) => {
       "book",
     ];
     const isValidBody = Object.keys(updatedUser).every((value) =>
-      validFields.includes(value)
+      validFields.includes(value),
     );
     if (!isValidBody) {
       return res.status(400).json({ message: "Invalid body fields" });
@@ -97,7 +98,7 @@ router.patch("/:id", async (req, res) => {
     const updatedUserDetails = await User.findOneAndUpdate(
       { _id: id },
       updatedUser,
-      { new: true }
+      { new: true },
     );
     if (!updatedUserDetails) {
       return res.status(404).json({ message: "user not found" });

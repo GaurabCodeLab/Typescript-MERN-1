@@ -1,12 +1,23 @@
 const express = require("express");
 const dbConnect = require("./config/database");
 const { userRouter } = require("./routes/userRouter");
+const { authRouter } = require("./routes/authRouter");
+const { personRouter } = require("./routes/personRouter");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
-app.use("/", userRouter);
+app.use("/person", personRouter);
+app.use("/auth", authRouter);
+app.use("/dashboard", userRouter);
 
 dbConnect()
   .then(() => {
