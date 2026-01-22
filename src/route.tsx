@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Registration from "./pages/Registration";
 import DashboardLayout from "./layout/DashboardLayout";
 import CommonLayout from "./layout/CommonLayout";
+import RequireAuth from "./components/RequireAuth";
 
 const routes = [
   {
@@ -23,7 +24,11 @@ const routes = [
   },
   {
     path: "/dashboard",
-    element: <DashboardLayout />,
+    element: (
+      <RequireAuth>
+        <DashboardLayout />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,
