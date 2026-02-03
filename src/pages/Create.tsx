@@ -1,11 +1,10 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import type React from "react";
 import type { User } from "../types/user";
 import { useCreateUserMutation } from "../redux/api/userApi";
 
-const Create: React.FC = () => {
+const Create = () => {
   const {
     register,
     handleSubmit,

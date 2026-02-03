@@ -1,8 +1,3 @@
-// interface DashboardHeaderProps {
-//   userName: string;
-//   onLogout: () => void;
-// }
-
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
 import type { Person } from "../types/person";

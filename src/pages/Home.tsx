@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import type React from "react";
 import { useState, useEffect } from "react";
 import type { User } from "../types/user";
 import { FaSort, FaSortUp } from "react-icons/fa";
@@ -12,7 +11,7 @@ import {
 
 const ITEMS_PER_PAGE = 4;
 
-const Home: React.FC = () => {
+const Home = () => {
   const [filteredUserData, setFilteredUserData] = useState<User[]>();
   const [gender, setGender] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<string>("");
@@ -21,7 +20,7 @@ const Home: React.FC = () => {
   const [paginationArray, setPaginationArray] = useState<number[]>([]);
   const [noOfPages, setNoOfPages] = useState<number>(1);
   const { data, isFetching } = useFetchUsersQuery();
-  const [deleteUser, { isLoading }] = useDeleteUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   useEffect(() => {
     if (!data || data.length === 0) {

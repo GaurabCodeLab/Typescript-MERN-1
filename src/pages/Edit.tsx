@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -8,7 +8,7 @@ import {
   useUpdateUserMutation,
 } from "../redux/api/userApi";
 
-const Edit: React.FC = () => {
+const Edit = () => {
   const {
     register,
     handleSubmit,

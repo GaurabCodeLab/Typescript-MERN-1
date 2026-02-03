@@ -37,8 +37,10 @@ const Login = () => {
       const personDetails = await personLogin(data).unwrap();
       dispatch(loggedInPerson(personDetails.data));
       navigate("/dashboard");
-    } catch (err: any) {
-      setCustomError(err?.data?.message || "Login failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed";
+      setCustomError(errorMessage);
     }
   };
 

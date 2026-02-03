@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -12,17 +12,16 @@ type RegistrationFormInputs = {
   password: string;
 };
 
-const Registration: React.FC = () => {
+const Registration = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegistrationFormInputs>();
 
-  const [personRegistration, { isLoading, error }] =
-    usePersonRegistrationMutation();
+  const [personRegistration, { isLoading }] = usePersonRegistrationMutation();
   const navigate = useNavigate();
-  const [customError, setCustomError] = React.useState<string>("");
+  const [customError, setCustomError] = useState<string>("");
   const personDetails = useSelector(
     (state: RootState) => state.person.personDetails,
   );
@@ -45,8 +44,10 @@ const Registration: React.FC = () => {
           navigate("/");
         }
       });
-    } catch (err: any) {
-      setCustomError(err?.data?.message || "Registration failed");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Registration failed";
+      setCustomError(errorMessage);
     }
   };
 
